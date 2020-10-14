@@ -3,17 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
+    "start": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "test:unit": "vue-cli-service test:unit",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
-    "agora-rtc-sdk": "^3.2.1",
+    "agora-rtc-sdk": "^3.1.0",
     "vue": "^3.0.0",
     "vue-class-component": "^8.0.0-0"
   },
   "devDependencies": {
+    "@types/agora-rtc-sdk": "^3.1.0",
     "@types/jest": "^24.0.19",
     "@typescript-eslint/eslint-plugin": "^2.33.0",
     "@typescript-eslint/parser": "^2.33.0",

@@ -1,6 +1,9 @@
 <template>
 	<div>
-		<Publisher message="Publisher" />
+		<Publisher
+			message="Agora Subscriber From Scratch"
+			appId="07584acf86384ab9b25b03c56f5299e3"
+		/>
 	</div>
 </template>
 
