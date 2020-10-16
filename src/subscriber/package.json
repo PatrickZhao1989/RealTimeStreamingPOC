@@ -8,12 +8,12 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
-    "@types/agora-rtc-sdk": "^3.1.0",
-    "agora-rtc-sdk": "^3.2.1",
+    "agora-rtc-sdk": "3.1.0",
     "core-js": "^3.6.5",
     "vue": "^3.0.0"
   },
   "devDependencies": {
+    "@types/agora-rtc-sdk": "3.1.0",
     "@typescript-eslint/eslint-plugin": "^2.33.0",
     "@typescript-eslint/parser": "^2.33.0",
     "@vue/cli-plugin-babel": "~4.5.0",
