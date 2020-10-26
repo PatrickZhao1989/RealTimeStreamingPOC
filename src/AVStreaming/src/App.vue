@@ -1,5 +1,5 @@
 <template>
-	<Audience msg="Streaming subscriber" />
+	<Audience msg="Streaming POC" />
 </template>
 
 <script lang="ts">
