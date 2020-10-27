@@ -4,5 +4,6 @@
 	"useTabs": true,
 	"semi": false,
 	"trailingComma": "es5",
-	"singleQuote": false
+	"singleQuote": false,
+	"endOfLine": "auto"
 }
