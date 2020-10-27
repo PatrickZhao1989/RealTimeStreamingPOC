@@ -24,7 +24,7 @@ app.use(cors())
 app.use("/audiostream", restApiRoute)
 
 restApiRoute.get("/broadcast-sample", (req, res) => {
-	const rs = fs.createReadStream("output-file/test-sample.pcm", {
+	const rs = fs.createReadStream("output-file/test-sample.ulaw", {
 		emitClose: true,
 		highWaterMark: 128 * 1024,
 	})
@@ -74,7 +74,8 @@ twilioListener.on("connection", (ws) => {
 
 	fileWriter.openFile(OUTPUT_FILE_NAME)
 
-	bufferer.onBufferWrite = (buffer) => decoder.decodeBuffer(buffer)
+	// Commenting the below - decoding on FE instead of here
+	// bufferer.onBufferWrite = (buffer) => decoder.decodeBuffer(buffer)
 	bufferer.onDataReady = (buffer) => {
 		console.log("Flushing buffer...")
 
