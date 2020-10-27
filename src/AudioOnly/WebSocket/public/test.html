@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport"
+		  content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Simple FE Streaming Service</title>
+	<script src="https://unpkg.com/pcm-player"></script>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js" integrity="sha384-LtrjvnR4Twt/qOuYxE721u19sVFLVSA4hf/rRt6PrZTmiPltdZcI7q7PXQBYTKyf" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+</head>
+<body>
+	<div id="app">
+		<div class="container py-2 vh-100">
+			<h1>Simple FE Streaming Service</h1>
+			<div class="card p-4 mt-4"
+				 v-bind:class="{ 'border-success': isReady }">
+				<div class="row">
+					<div class="col-md-6">
+						<label class="w-100">
+							<span>Enter server WSS address:</span>
+							<input class="form-control" type="url" v-model="address">
+						</label>
+
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-6">
+						<button class="btn"
+								v-bind:class="{ 'btn-primary': !isReady, 'btn-success': isReady }"
+								@click="connectToWss(address)">
+							{{ this.isReady ? 'Connected' : 'Connect' }}
+						</button>
+					</div>
+				</div>
+			</div>
+			<div class="card p-4 mt-2 border-success" v-if="isReady">
+				Ready to accept audio from {{ wsConnection.url }}
+			</div>
+		</div>
+	</div>
+<script>
+	const channels = 1
+	const sampleRate = 8000
+
+	const app = new Vue({
+		el: "#app",
+		data: {
+			// Using PCMPlayer to simplify encoding + buffering
+			player: new PCMPlayer({
+				inputCodec: 'Int16',
+				channels,
+				sampleRate,
+				flushTime: 500
+			}),
+			wsConnection: null,
+			address: 'ws://localhost:3000/audiowss',
+			isReady: false,
+		},
+		computed: {
+		},
+		methods: {
+			connectToWss: function (wsAddress) {
+				if (!!this.wsConnection) {
+					this.wsConnection.terminate()
+				}
+				this.wsConnection = new WebSocket(wsAddress)
+				this.wsConnection.binaryType = 'arraybuffer'
+				this.wsConnection.onopen = () => {
+					this.isReady = true
+				}
+				this.wsConnection.onmessage = (event) => {
+					// Good read for manual encoding - https://stackoverflow.com/questions/43551473/play-pcm-with-javascript
+					this.player.feed(event.data)
+				}
+				this.wsConnection.onclose = () => {
+					this.isReady = true
+				}
+				this.wsConnection.onerror = () => {
+					this.isReady = true
+				}
+			}
+		}
+	})
+</script>
+</body>
+</html>
