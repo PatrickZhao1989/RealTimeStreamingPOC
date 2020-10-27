@@ -12,15 +12,18 @@
 	"author": "Patrick",
 	"license": "ISC",
 	"dependencies": {
+		"alawmulaw": "^6.0.0",
+		"cors": "^2.8.5",
 		"eslint": "^7.11.0",
 		"express": "^4.17.1",
 		"twilio": "^3.50.0",
 		"ws": "^7.3.1"
 	},
 	"devDependencies": {
-		"@types/ws": "^7.2.7",
+		"@types/cors": "^2.8.8",
 		"@types/express": "^4.17.8",
 		"@types/twilio": "^2.11.0",
+		"@types/ws": "^7.2.7",
 		"@typescript-eslint/eslint-plugin": "^4.4.1",
 		"@typescript-eslint/parser": "^4.4.1",
 		"eslint-config-prettier": "^6.13.0",

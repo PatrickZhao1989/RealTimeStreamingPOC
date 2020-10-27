@@ -2,19 +2,97 @@ import * as WebSocket from "ws"
 import express from "express"
 import http from "http"
 import fs from "fs"
+import { AudioBufferer } from "./modules/audio-bufferer"
+import { MulawDecoder } from "./modules/mulaw-decoder"
+import { TwilioMlStreamModel } from "./models/twilio-ml-stream.model"
+import * as url from "url"
+import cors from "cors"
+import { FileWriter } from "./modules/file-writer"
 
 const PORT = 3000
+const OUTPUT_FILE_NAME = "./output-file/test-writing-false.pcm"
+const SAVE_PCM_FILE = false
 
 // Instantiate express server
 const app = express()
 const server = http.createServer(app)
-const webSocketServer = new WebSocket.Server({ server })
+const restApiRoute = express.Router()
+const twilioListener = new WebSocket.Server({ noServer: true })
+const audioWssListener = new WebSocket.Server({ noServer: true })
 
-webSocketServer.on("connection", (ws: WebSocket) => {
+app.use(cors())
+app.use("/audiostream", restApiRoute)
+
+restApiRoute.get("/broadcast-sample", (req, res) => {
+	const rs = fs.createReadStream("output-file/test-sample.pcm", {
+		emitClose: true,
+		highWaterMark: 128 * 1024,
+	})
+
+	rs.on("data", (chunk) => {
+		audioWssListener.clients.forEach((client) => {
+			//send the client the current message
+			client.send(chunk)
+		})
+	})
+	rs.on("close", () => {
+		res.statusCode = 200
+		res.send()
+	})
+})
+
+server.on("upgrade", (request, socket, head) => {
+	const pathname = url.parse(request.url).pathname
+
+	if (pathname === "/audiowss") {
+		audioWssListener.handleUpgrade(request, socket, head, function done(ws) {
+			audioWssListener.emit("connection", ws, request)
+		})
+	} else if (pathname === "/") {
+		twilioListener.handleUpgrade(request, socket, head, function done(ws) {
+			twilioListener.emit("connection", ws, request)
+		})
+	} else {
+		socket.destroy()
+	}
+})
+
+audioWssListener.on("connection", (ws) => {
+	console.log("A client connected to audio WSS")
+})
+
+twilioListener.on("connection", (ws) => {
 	console.log("New connection initiated")
 
+	// Setting up buffer + file save for testing
+	const decoder = new MulawDecoder()
+	const bufferer = new AudioBufferer()
+	const fileWriter = new FileWriter()
+
+	let finalise = false
+	fileWriter.enable = SAVE_PCM_FILE
+
+	fileWriter.openFile(OUTPUT_FILE_NAME)
+
+	bufferer.onBufferWrite = (buffer) => decoder.decodeBuffer(buffer)
+	bufferer.onDataReady = (buffer) => {
+		console.log("Flushing buffer...")
+
+		buffer.forEach((buf) => {
+			audioWssListener.clients.forEach((client) => {
+				client.send(buf)
+			})
+
+			fileWriter.appendToFile(buf)
+		})
+
+		if (finalise) {
+			fileWriter.close()
+		}
+	}
+
 	ws.on("message", (data: WebSocket.Data) => {
-		const msg = JSON.parse(data as string)
+		const msg: TwilioMlStreamModel | { event: "connected" | "start" | "stop" } = JSON.parse(data as string)
 		switch (msg.event) {
 			case "connected":
 				console.log(`A new call has connected.`)
@@ -23,21 +101,24 @@ webSocketServer.on("connection", (ws: WebSocket) => {
 				console.log(`Starting media stream ${JSON.stringify(msg)}`)
 				break
 			case "media":
-				console.log(`Receiving audio ... payload is ${JSON.stringify(msg.media)}`)
-				webSocketServer.clients.forEach((client) => {
-					//send the client the current message
-					const broadCastingPayload = {
-						AuctionId: 10,
-						Media: msg.media,
-					}
-					client.send(JSON.stringify(broadCastingPayload))
-				})
+				bufferer.pushData(msg.media.payload)
+				// console.log(`Receiving audio ... payload is ${JSON.stringify(msg.media)}`)
+				// twilioListener.clients.forEach((client) => {
+				// 	//send the client the current message
+				// 	const broadCastingPayload = {
+				// 		AuctionId: 10,
+				// 		Media: msg.media,
+				// 	}
+				// 	client.send(JSON.stringify(broadCastingPayload))
+				// })
 				break
 			case "stop":
 				console.log(`Call has ended`)
+				finalise = true
+				bufferer.flushBuffer()
 				break
 			default:
-				console.log(`Unknown data ${msg.Name}`)
+				console.log(`Unknown data ${msg}`)
 				break
 		}
 	})

@@ -1,37 +1,35 @@
-const AUDIO_BUFFER_SIZE = 50
+const DEFAULT_AUDIO_BUFFER_SIZE = 50
 
 export class AudioBufferer {
 	private buffer: Buffer[] = []
 	private processingBuffer: Buffer[] = []
 
-	constructor(
-		public onDataReady?: (buffer: Buffer[]) => void,
-		public onBufferWrite?: (buffer: Buffer) => Buffer,
-		) {}
+	public onDataReady?: (buffer: Buffer[]) => void
+	public onBufferWrite?: (buffer: Buffer) => Buffer
+
+	constructor(private bufferSize = DEFAULT_AUDIO_BUFFER_SIZE) {}
 
 	public pushData(base64String: string): void {
-		if (this.buffer.length < AUDIO_BUFFER_SIZE) {
-			let data = Buffer.from(base64String, "base64")
+		let data = Buffer.from(base64String, "base64")
 
-			if (this.onBufferWrite) {
-				data = this.onBufferWrite(data)
-			}
-
-			this.buffer.push(data)
-			return
+		if (this.onBufferWrite) {
+			data = this.onBufferWrite(data)
 		}
 
-		// Buffer full, kick the bucket
-		this.flushBuffer()
+		this.buffer.push(data)
+
+		if (this.buffer.length >= this.bufferSize) {
+			// Buffer full, kick the bucket
+			this.flushBuffer()
+		}
 	}
 
 	public flushBuffer(): void {
-		this.processingBuffer.push(...this.buffer)
+		this.processingBuffer = this.buffer
 		this.buffer = []
 
 		if (this.onDataReady) {
 			this.onDataReady(this.processingBuffer)
-			this.processingBuffer.length = 0
 		}
 	}
 }
