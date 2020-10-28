@@ -14,6 +14,7 @@ import { base64StringToBuffer } from "./modules/string.util"
 const PORT = 3000
 const OUTPUT_FILE_NAME = "./output-file/test-writing-false.pcm"
 const SAVE_PCM_FILE = false
+const USE_JSON_PAYLOAD = false
 
 // Instantiate express server
 const app = express()
@@ -35,7 +36,13 @@ restApiRoute.get("/broadcast-sample", (req, res) => {
 	rs.on("data", (chunk: Buffer) => {
 		audioWssListener.clients.forEach((client) => {
 			// send the client the current message
-			client.send(transformChunkToPayload(chunk, { AuctionId: 10, ConnectionIndex: connIndex }))
+			client.send(
+				transformChunkToPayload(chunk, {
+					AuctionId: 10,
+					ConnectionIndex: connIndex,
+					useJsonPayload: USE_JSON_PAYLOAD,
+				})
+			)
 			// twilioListener.clients.forEach((client) => {
 			// 	//send the client the current message
 			// 	const broadCastingPayload = {
@@ -76,7 +83,7 @@ twilioListener.on("connection", (ws) => {
 	console.log("New connection initiated")
 
 	const broadcastToClient = (buf: Buffer) => {
-		const payload = transformChunkToPayload(buf)
+		const payload = transformChunkToPayload(buf, { useJsonPayload: USE_JSON_PAYLOAD })
 		audioWssListener.clients.forEach((client) => {
 			client.send(payload)
 		})

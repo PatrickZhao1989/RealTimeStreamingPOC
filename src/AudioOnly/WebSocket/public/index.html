@@ -69,6 +69,32 @@
 		computed: {
 		},
 		methods: {
+			transformPayloadToBuffer: function(eventData) {
+				// Good read for manual encoding - https://stackoverflow.com/questions/43551473/play-pcm-with-javascript
+				const processJsonPayload = (data) => {
+					const jsonPayload = JSON.parse(data)
+					const connectionIndex = jsonPayload.ConnectionIndex
+					const arrayBuffer = this.base64ToArrayBuffer(jsonPayload.Media)
+
+					if (!this.savedConnectionIndex.includes(connectionIndex)) {
+						this.savedConnectionIndex = [
+							...this.savedConnectionIndex,
+							connectionIndex,
+						]
+					}
+
+					return arrayBuffer
+				}
+
+				const processBinaryPayload = (data) => {
+					return new Uint8Array(data)
+				}
+
+				// const arrayBuffer = processJsonPayload(eventData)
+				const arrayBuffer = processBinaryPayload(eventData)
+
+				return arrayBuffer
+			},
 			connectToWss: function (wsAddress) {
 				if (!!this.wsConnection) {
 					this.wsConnection.terminate()
@@ -79,19 +105,8 @@
 					this.isReady = true
 				}
 				this.wsConnection.onmessage = (event) => {
-					// Good read for manual encoding - https://stackoverflow.com/questions/43551473/play-pcm-with-javascript
-					const jsonPayload = JSON.parse(event.data)
-					const connectionIndex = jsonPayload.ConnectionIndex
-					const arrayBuffer = this.base64ToArrayBuffer(jsonPayload.Media)
-					// const arrayBuffer = new Uint8Array(event.data.Media)
+					const arrayBuffer = this.transformPayloadToBuffer(event.data)
 					const byteArray16 = mulaw.decode(arrayBuffer)
-
-					if (!this.savedConnectionIndex.includes(connectionIndex)) {
-						this.savedConnectionIndex = [
-							...this.savedConnectionIndex,
-							connectionIndex,
-						]
-					}
 
 					this.player.feed(byteArray16)
 					// this.player.feed(byteArray16, this.savedConnectionIndex.indexOf(connectionIndex))
