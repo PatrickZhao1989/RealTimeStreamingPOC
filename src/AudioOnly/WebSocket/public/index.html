@@ -57,13 +57,14 @@
 				inputCodec: 'Int16',
 				channels,
 				sampleRate,
-				flushTime: 500
+				flushTime: 200
 			}),
 			wsConnection: null,
-			address: 'wss://aplus-test-audiostream.azurewebsites.net/audiowss',
-			// address: 'ws://localhost:3000/audiowss', // Local address
+			// address: 'wss://aplus-test-audiostream.azurewebsites.net/audiowss',
+			address: 'ws://localhost:3000/audiowss', // Local address
 			isReady: false,
 			audioComing: false,
+			savedConnectionIndex: []
 		},
 		computed: {
 		},
@@ -79,8 +80,21 @@
 				}
 				this.wsConnection.onmessage = (event) => {
 					// Good read for manual encoding - https://stackoverflow.com/questions/43551473/play-pcm-with-javascript
-					const byteArray16 = mulaw.decode((new Uint8Array(event.data)))
+					const jsonPayload = JSON.parse(event.data)
+					const connectionIndex = jsonPayload.ConnectionIndex
+					const arrayBuffer = this.base64ToArrayBuffer(jsonPayload.Media)
+					// const arrayBuffer = new Uint8Array(event.data.Media)
+					const byteArray16 = mulaw.decode(arrayBuffer)
+
+					if (!this.savedConnectionIndex.includes(connectionIndex)) {
+						this.savedConnectionIndex = [
+							...this.savedConnectionIndex,
+							connectionIndex,
+						]
+					}
+
 					this.player.feed(byteArray16)
+					// this.player.feed(byteArray16, this.savedConnectionIndex.indexOf(connectionIndex))
 				}
 				this.wsConnection.onclose = () => {
 					this.isReady = true
@@ -88,6 +102,15 @@
 				this.wsConnection.onerror = () => {
 					this.isReady = true
 				}
+			},
+			base64ToArrayBuffer: function (base64) {
+				const binaryString = window.atob(base64)
+				const len = binaryString.length
+				const bytes = new Uint8Array(len)
+				for (let i = 0; i < len; i++) {
+					bytes[i] = binaryString.charCodeAt(i);
+				}
+				return bytes;
 			}
 		}
 	})

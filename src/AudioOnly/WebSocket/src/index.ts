@@ -8,6 +8,8 @@ import { TwilioMlStreamModel } from "./models/twilio-ml-stream.model"
 import * as url from "url"
 import cors from "cors"
 import { FileWriter } from "./modules/file-writer"
+import { transformChunkToPayload } from "./modules/package-transformer"
+import { base64StringToBuffer } from "./modules/string.util"
 
 const PORT = 3000
 const OUTPUT_FILE_NAME = "./output-file/test-writing-false.pcm"
@@ -28,11 +30,20 @@ restApiRoute.get("/broadcast-sample", (req, res) => {
 		emitClose: true,
 		highWaterMark: 128 * 1024,
 	})
+	const connIndex = Math.floor(Math.random() * 1000)
 
-	rs.on("data", (chunk) => {
+	rs.on("data", (chunk: Buffer) => {
 		audioWssListener.clients.forEach((client) => {
-			//send the client the current message
-			client.send(chunk)
+			// send the client the current message
+			client.send(transformChunkToPayload(chunk, { AuctionId: 10, ConnectionIndex: connIndex }))
+			// twilioListener.clients.forEach((client) => {
+			// 	//send the client the current message
+			// 	const broadCastingPayload = {
+			// 		AuctionId: 10,
+			// 		Media: msg.media,
+			// 	}
+			// 	client.send(JSON.stringify(broadCastingPayload))
+			// })
 		})
 	})
 	rs.on("close", () => {
@@ -64,8 +75,15 @@ audioWssListener.on("connection", (ws) => {
 twilioListener.on("connection", (ws) => {
 	console.log("New connection initiated")
 
+	const broadcastToClient = (buf: Buffer) => {
+		const payload = transformChunkToPayload(buf)
+		audioWssListener.clients.forEach((client) => {
+			client.send(payload)
+		})
+	}
+
 	// Setting up buffer + file save for testing
-	const decoder = new MulawDecoder()
+	// const decoder = new MulawDecoder()
 	const bufferer = new AudioBufferer()
 	const fileWriter = new FileWriter()
 
@@ -80,9 +98,7 @@ twilioListener.on("connection", (ws) => {
 		console.log("Flushing buffer...")
 
 		buffer.forEach((buf) => {
-			audioWssListener.clients.forEach((client) => {
-				client.send(buf)
-			})
+			// broadcastToClient(buf)
 
 			fileWriter.appendToFile(buf)
 		})
@@ -102,7 +118,9 @@ twilioListener.on("connection", (ws) => {
 				console.log(`Starting media stream ${JSON.stringify(msg)}`)
 				break
 			case "media":
-				bufferer.pushData(msg.media.payload)
+				const bufferData = base64StringToBuffer(msg.media.payload)
+				bufferer.pushData(bufferData)
+				broadcastToClient(bufferData)
 				// console.log(`Receiving audio ... payload is ${JSON.stringify(msg.media)}`)
 				// twilioListener.clients.forEach((client) => {
 				// 	//send the client the current message

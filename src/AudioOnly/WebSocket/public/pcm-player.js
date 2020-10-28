@@ -14,7 +14,7 @@ class PCMPlayer {
 		}
 
 		this.option = Object.assign({}, defaultOption, option) // 实例最终配置参数
-		this.samples = new Float32Array() // 样本存放区域
+		this.samplesArr = [new Float32Array()] // 样本存放区域
 		this.interval = setInterval(this.flush.bind(this), this.option.flushTime)
 		this.convertValue = this.getConvertValue()
 		this.typedArray = this.getTypedArray()
@@ -81,24 +81,30 @@ class PCMPlayer {
 		return true
 	}
 
-	feed(data) {
+	feed(data, bufferIndex = 0) {
 		this.isSupported(data)
 
 		// 获取格式化后的buffer
 		data = this.getFormatedValue(data)
 		// 开始拷贝buffer数据
 		// 新建一个Float32Array的空间
-		const tmp = new Float32Array(this.samples.length + data.length)
+
+		while (this.samplesArr.length < bufferIndex + 1) {
+			this.samplesArr.push(new Float32Array())
+		}
+
+		const sample = this.samplesArr[bufferIndex]
+		const tmp = new Float32Array(sample.length + data.length)
 		// console.log(data, this.samples, this.samples.length)
 		// 复制当前的实例的buffer值（历史buff)
 		// 从头（0）开始复制
-		tmp.set(this.samples, 0)
+		tmp.set(sample, 0)
 		// 复制传入的新数据
 		// 从历史buff位置开始
-		tmp.set(data, this.samples.length)
+		tmp.set(data, sample.length)
 		// 将新的完整buff数据赋值给samples
 		// interval定时器也会从samples里面播放数据
-		this.samples = tmp
+		this.samplesArr[bufferIndex] = tmp
 	}
 
 	getFormatedValue(data) {
@@ -128,51 +134,61 @@ class PCMPlayer {
 		if (this.interval) {
 			clearInterval(this.interval)
 		}
-		this.samples = null
+		this.samplesArr = null
 		this.audioCtx.close()
 		this.audioCtx = null
 	}
 
 	flush() {
-		if (!this.samples.length) return
-		var bufferSource = this.audioCtx.createBufferSource()
-		const length = this.samples.length / this.option.channels
-		const audioBuffer = this.audioCtx.createBuffer(this.option.channels, length, this.option.sampleRate)
+		if (!this.samplesArr.length) return
+		const maxLength = Math.max(...this.samplesArr.map((sample) => sample.length))
+		if (maxLength <= 0) return
 
-		for (let channel = 0; channel < this.option.channels; channel++) {
-			const audioData = audioBuffer.getChannelData(channel)
-			let offset = channel
-			let decrement = 50
-			for (let i = 0; i < length; i++) {
-				audioData[i] = this.samples[offset]
-				/* fadein */
-				if (i < 50) {
-					audioData[i] = (audioData[i] * i) / 50
+		const bufferSource = this.audioCtx.createBufferSource()
+		const audioBuffer = this.audioCtx.createBuffer(this.option.channels, maxLength, this.option.sampleRate)
+
+		for (let i = 0; i < this.samplesArr.length; i++) {
+			const sample = this.samplesArr[i]
+
+			if (!sample.length) return
+
+			const length = sample.length / this.option.channels
+
+			for (let channel = 0; channel < this.option.channels; channel++) {
+				const audioData = audioBuffer.getChannelData(channel)
+				let offset = channel
+				let decrement = 50
+				for (let i = 0; i < length; i++) {
+					audioData[i] = sample[offset]
+					/* fadein */
+					if (i < 50) {
+						audioData[i] = (audioData[i] * i) / 50
+					}
+					/* fadeout*/
+					if (i >= length - 51) {
+						audioData[i] = (audioData[i] * decrement--) / 50
+					}
+					offset += this.option.channels
 				}
-				/* fadeout*/
-				if (i >= length - 51) {
-					audioData[i] = (audioData[i] * decrement--) / 50
-				}
-				offset += this.option.channels
 			}
-		}
 
-		if (this.startTime < this.audioCtx.currentTime) {
-			this.startTime = this.audioCtx.currentTime
+			if (this.startTime < this.audioCtx.currentTime) {
+				this.startTime = this.audioCtx.currentTime
+			}
+			console.log(
+				"start vs current " +
+					this.startTime +
+					" vs " +
+					this.audioCtx.currentTime +
+					" duration: " +
+					audioBuffer.duration
+			)
+			bufferSource.buffer = audioBuffer
+			bufferSource.connect(this.gainNode)
+			bufferSource.start(this.startTime)
+			this.startTime += audioBuffer.duration
+			this.samplesArr[i] = new Float32Array()
 		}
-		console.log(
-			"start vs current " +
-				this.startTime +
-				" vs " +
-				this.audioCtx.currentTime +
-				" duration: " +
-				audioBuffer.duration
-		)
-		bufferSource.buffer = audioBuffer
-		bufferSource.connect(this.gainNode)
-		bufferSource.start(this.startTime)
-		this.startTime += audioBuffer.duration
-		this.samples = new Float32Array()
 	}
 
 	async pause() {

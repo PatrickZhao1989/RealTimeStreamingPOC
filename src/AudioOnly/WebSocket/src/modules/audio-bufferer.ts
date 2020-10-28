@@ -9,9 +9,7 @@ export class AudioBufferer {
 
 	constructor(private bufferSize = DEFAULT_AUDIO_BUFFER_SIZE) {}
 
-	public pushData(base64String: string): void {
-		let data = Buffer.from(base64String, "base64")
-
+	public pushData(data: Buffer): void {
 		if (this.onBufferWrite) {
 			data = this.onBufferWrite(data)
 		}
