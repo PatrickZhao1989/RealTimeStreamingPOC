@@ -126,8 +126,8 @@ twilioListener.on("connection", (ws) => {
 				break
 			case "media":
 				const bufferData = base64StringToBuffer(msg.media.payload)
-				bufferer.pushData(bufferData)
 				broadcastToClient(bufferData)
+				bufferer.pushData(bufferData)
 				// console.log(`Receiving audio ... payload is ${JSON.stringify(msg.media)}`)
 				// twilioListener.clients.forEach((client) => {
 				// 	//send the client the current message
