@@ -2,7 +2,9 @@ $rootDir=$PSScriptRoot
 Set-Location $rootDir\..
 . "$rootDir\variable.ps1"
 
-docker push "${imageName}:${version}"
+$versionTag="${version}${tagPostfix}"
+$latestTag="latest-${tagPostfix}"
+docker push "${imageName}:${versionTag}"
 
-docker tag "${imageName}:${version}" "${imageName}:latest"
-docker push "${imageName}:latest"
+docker tag "${imageName}:${versionTag}" "${imageName}:${latestTag}"
+docker push "${imageName}:${latestTag}"

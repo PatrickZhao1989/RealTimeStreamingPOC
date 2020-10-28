@@ -50,6 +50,7 @@
 	const channels = 1
 	const sampleRate = 8000
 	const mulaw = alawmulaw.mulaw
+	const decodeOnClient = true
 
 	const app = new Vue({
 		el: "#app",
@@ -57,12 +58,12 @@
 			// Using PCMPlayer to simplify encoding + buffering
 			player: null,
 			wsConnection: null,
-			address: 'wss://aplus-audio-wsserver.azurewebsites.net/audiowss',
+			address: decodeOnClient ? 'wss://aplus-audio-wsserver-2.azurewebsites.net/audiowss' : 'wss://aplus-audio-wsserver.azurewebsites.net/audiowss',
 			// address: 'ws://localhost:3000/audiowss', // Local address
 			isReady: false,
 			audioComing: false,
 			savedConnectionIndex: [],
-			decodeOnClient: true
+			decodeOnClient,
 		},
 		computed: {
 		},

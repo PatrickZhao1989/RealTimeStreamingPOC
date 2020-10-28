@@ -15,6 +15,7 @@ const PORT = 3000
 const OUTPUT_FILE_NAME = "./output-file/test-writing-false.pcm"
 const SAVE_PCM_FILE = false
 const USE_JSON_PAYLOAD = false
+const DECODE_ON_CLIENT = true
 
 // Instantiate express server
 const app = express()
@@ -32,12 +33,14 @@ restApiRoute.get("/broadcast-sample", (req, res) => {
 		highWaterMark: 128 * 1024,
 	})
 	const connIndex = Math.floor(Math.random() * 1000)
+	const decoder = new MulawDecoder()
 
 	rs.on("data", (chunk: Buffer) => {
+		const payload = DECODE_ON_CLIENT ? chunk : decoder.decodeBuffer(chunk)
 		audioWssListener.clients.forEach((client) => {
 			// send the client the current message
 			client.send(
-				transformChunkToPayload(chunk, {
+				transformChunkToPayload(payload, {
 					AuctionId: 10,
 					ConnectionIndex: connIndex,
 					useJsonPayload: USE_JSON_PAYLOAD,
@@ -90,7 +93,7 @@ twilioListener.on("connection", (ws) => {
 	}
 
 	// Setting up buffer + file save for testing
-	// const decoder = new MulawDecoder()
+	const decoder = new MulawDecoder()
 	const bufferer = new AudioBufferer()
 	const fileWriter = new FileWriter()
 
@@ -99,19 +102,19 @@ twilioListener.on("connection", (ws) => {
 
 	fileWriter.openFile(OUTPUT_FILE_NAME)
 
-	// Commenting the below - decoding on FE instead of here
-	// bufferer.onBufferWrite = (buffer) => decoder.decodeBuffer(buffer)
 	bufferer.onDataReady = (buffer) => {
 		console.log("Flushing buffer...")
 
-		buffer.forEach((buf) => {
-			// broadcastToClient(buf)
+		if (SAVE_PCM_FILE) {
+			buffer.forEach((buf) => {
+				// broadcastToClient(buf)
+				const payload = DECODE_ON_CLIENT ? buf : decoder.decodeBuffer(buf)
+				fileWriter.appendToFile(payload)
+			})
 
-			fileWriter.appendToFile(buf)
-		})
-
-		if (finalise) {
-			fileWriter.close()
+			if (finalise) {
+				fileWriter.close()
+			}
 		}
 	}
 
@@ -126,8 +129,9 @@ twilioListener.on("connection", (ws) => {
 				break
 			case "media":
 				const bufferData = base64StringToBuffer(msg.media.payload)
-				broadcastToClient(bufferData)
-				bufferer.pushData(bufferData)
+				const payload = DECODE_ON_CLIENT ? bufferData : decoder.decodeBuffer(bufferData)
+				broadcastToClient(payload)
+				bufferer.pushData(payload)
 				// console.log(`Receiving audio ... payload is ${JSON.stringify(msg.media)}`)
 				// twilioListener.clients.forEach((client) => {
 				// 	//send the client the current message
