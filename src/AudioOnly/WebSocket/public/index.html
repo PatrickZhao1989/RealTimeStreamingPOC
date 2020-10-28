@@ -18,6 +18,8 @@
 	<div id="app">
 		<div class="container py-2 vh-100">
 			<h1>Simple FE Streaming Service</h1>
+			<h2 v-if="decodeOnClient">Decode on <span class="text-warning">CLIENT</span> side</h2>
+			<h2 v-if="!decodeOnClient">Decode on <span class="text-success">SERVER</span> side</h2>
 			<div class="card p-4 mt-4"
 				 v-bind:class="{ 'border-success': isReady }">
 				<div class="row">
@@ -59,7 +61,8 @@
 			// address: 'ws://localhost:3000/audiowss', // Local address
 			isReady: false,
 			audioComing: false,
-			savedConnectionIndex: []
+			savedConnectionIndex: [],
+			decodeOnClient: true
 		},
 		computed: {
 		},
@@ -92,7 +95,11 @@
 				}
 
 				const processBinaryPayload = (data) => {
-					return new Uint8Array(data)
+					if (this.decodeOnClient) {
+						return new Uint8Array(data)
+					}
+
+					return new Uint16Array(data)
 				}
 
 				// const arrayBuffer = processJsonPayload(eventData)
@@ -112,8 +119,11 @@
 					this.isReady = true
 				}
 				this.wsConnection.onmessage = (event) => {
+					// event.data contains uLAW => Unsigned 8 bit PCM binary
 					const arrayBuffer = this.transformPayloadToBuffer(event.data)
-					const byteArray16 = mulaw.decode(arrayBuffer)
+
+					// Transform Unsigned 8bit PCM uLAW -> 16 bit PCM
+					const byteArray16 = this.decodeOnClient ? mulaw.decode(arrayBuffer) : arrayBuffer
 
 					this.player.feed(byteArray16)
 					// this.player.feed(byteArray16, this.savedConnectionIndex.indexOf(connectionIndex))
