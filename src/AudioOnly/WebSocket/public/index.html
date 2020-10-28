@@ -53,12 +53,7 @@
 		el: "#app",
 		data: {
 			// Using PCMPlayer to simplify encoding + buffering
-			player: new PCMPlayer({
-				inputCodec: 'Int16',
-				channels,
-				sampleRate,
-				flushTime: 200
-			}),
+			player: null,
 			wsConnection: null,
 			address: 'wss://aplus-audio-wsserver.azurewebsites.net/audiowss',
 			// address: 'ws://localhost:3000/audiowss', // Local address
@@ -69,6 +64,16 @@
 		computed: {
 		},
 		methods: {
+			initialiseAudio: function() {
+				if (!!this.player) return
+
+				this.player = new PCMPlayer({
+					inputCodec: 'Int16',
+					channels,
+					sampleRate,
+					flushTime: 200
+				})
+			},
 			transformPayloadToBuffer: function(eventData) {
 				// Good read for manual encoding - https://stackoverflow.com/questions/43551473/play-pcm-with-javascript
 				const processJsonPayload = (data) => {
@@ -96,6 +101,8 @@
 				return arrayBuffer
 			},
 			connectToWss: function (wsAddress) {
+				this.initialiseAudio()
+
 				if (!!this.wsConnection) {
 					this.wsConnection.terminate()
 				}
