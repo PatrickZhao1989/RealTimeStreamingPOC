@@ -1,0 +1,20 @@
+
+@baseUrl=api.agora.io/dev/v1
+@contentType=application/json
+//Add your appId below
+@appId=07584acf86384ab9b25b03c56f5299e3
+//Follow https://docs.agora.io/en/faq/restful_authentication to generate the token
+//Create an .env file and create an environment variable AgoraRestfulCred
+@authToken={{$dotenv AgoraRestfulCred}}
+
+// Refer to https://docs.agora.io/en/rtc/restfulapi/#/Project%20management/projects
+###
+GET https://{{baseUrl}}/projects 
+content-type: {{contentType}}
+Authorization: Basic {{authToken}}
+
+
+###
+GET https://{{baseUrl}}/channel/{{appId}}
+content-type: application/json;
+Authorization: Basic {{authToken}}
