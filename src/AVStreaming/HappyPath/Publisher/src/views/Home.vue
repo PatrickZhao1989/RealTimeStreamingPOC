@@ -1,5 +1,5 @@
 <template>
-	<Publisher msg="Auctions Plus Next Generation Auction Broadcasting Platform" />
+	<Publisher />
 </template>
 
 <script lang="ts">

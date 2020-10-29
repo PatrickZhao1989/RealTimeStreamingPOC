@@ -41,19 +41,11 @@ restApiRoute.get("/broadcast-sample", (req, res) => {
 			// send the client the current message
 			client.send(
 				transformChunkToPayload(payload, {
-					AuctionId: 10,
+					CustomIdentifier: 10,
 					ConnectionIndex: connIndex,
 					useJsonPayload: USE_JSON_PAYLOAD,
 				})
 			)
-			// twilioListener.clients.forEach((client) => {
-			// 	//send the client the current message
-			// 	const broadCastingPayload = {
-			// 		AuctionId: 10,
-			// 		Media: msg.media,
-			// 	}
-			// 	client.send(JSON.stringify(broadCastingPayload))
-			// })
 		})
 	})
 	rs.on("close", () => {
@@ -136,7 +128,7 @@ twilioListener.on("connection", (ws) => {
 				// twilioListener.clients.forEach((client) => {
 				// 	//send the client the current message
 				// 	const broadCastingPayload = {
-				// 		AuctionId: 10,
+				// 		CustomIdentifier: 10,
 				// 		Media: msg.media,
 				// 	}
 				// 	client.send(JSON.stringify(broadCastingPayload))

@@ -12,11 +12,7 @@ and forward it to a WebSocket client which will play it in the browser.
    and decode it to a 16-bit PCM sequence which will be played via WebKit 
    HTML5 audio context library.
 
-## Deployment
-Resource group: `ap-rg-live-stream-test`
-
-
-### Server - via Docker:
+### Server - via Docker && Azure Container Registry && Azure Web App in NodeJS hosted as ACI:
 1. Install [Docker](https://www.docker.com/)
 2. Open `_devops/variable.ps1`. Change the tag and image name as necessary.
 3. Run `npm run build:dockerfile`. 
@@ -28,14 +24,6 @@ Resource group: `ap-rg-live-stream-test`
 6. ACR webhook should automatically re-deploy Azure App Service
    when there's a change in the image with `latest-${postfix}` tag.
    If not, we need to manually deploy this image to Azure App Service.
-   Below are the app services with auto-deploy:
-   - Server decoding:
-     - App service: `aplus-audio-wsserver` 
-     - Docker image: `apluslivestreamtest.azurecr.io:latest-server-decoding`
-   - Client decoding:
-     - App service: `aplus-audio-wsserver-2` 
-     - Docker image: `apluslivestreamtest.azurecr.io:latest-client-decoding`
-   
  
 ### Browser - static HTML:
 1. Change the configuration in `public/index.html` according to which decoding type we want.
@@ -43,8 +31,4 @@ Resource group: `ap-rg-live-stream-test`
      - `const decodeOnClient = false` 
    - Client decoding:
      - `const decodeOnClient = true` 
-2. Deploy `public/index.html` and `public/pcm-player.js` to the following storage accounts:
-   - Server decoding:
-     - Storage account: `apluslivestreamui` 
-   - Client decoding:
-     - Storage account: `apluslivestreamui2` 
+2. Deploy `public/index.html` and `public/pcm-player.js` to your static site hosting environment.

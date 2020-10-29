@@ -1,15 +1,5 @@
 ## Read me for information about A/V Streaming Happy Path - using Agora
 
-### Publisher
-URL: https://aplusavpublisher.z8.web.core.windows.net/?channel={Channel-Name}&&token={Token}
-
-
-### Subscriber
-URL: https://aplusavsubscriber.z8.web.core.windows.net/?channel={Channel-Name}&&token={Token}
-
-
-
-
 ---
 ## DevOps
 

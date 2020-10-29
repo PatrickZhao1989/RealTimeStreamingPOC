@@ -58,7 +58,7 @@
 			// Using PCMPlayer to simplify encoding + buffering
 			player: null,
 			wsConnection: null,
-			address: decodeOnClient ? 'wss://aplus-audio-wsserver-2.azurewebsites.net/audiowss' : 'wss://aplus-audio-wsserver.azurewebsites.net/audiowss',
+			address: decodeOnClient ? 'wss://{ServerAddress}/audiowss' : 'wss://{ServerAddress}/audiowss',
 			// address: 'ws://localhost:3000/audiowss', // Local address
 			isReady: false,
 			audioComing: false,

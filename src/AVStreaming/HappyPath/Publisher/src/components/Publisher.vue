@@ -165,10 +165,6 @@ import {
 } from "./Publisher.Logic"
 export default defineComponent({
 	name: "Publisher",
-	props: {
-		msg: String,
-		defaultRole: String,
-	},
 	setup() {
 		const route = useRoute()
 		state.option = {

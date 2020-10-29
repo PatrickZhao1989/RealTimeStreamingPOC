@@ -1,11 +1,11 @@
 interface BroadcastingPayload {
 	Media: string
-	AuctionId: number
+	CustomIdentifier: number
 	ConnectionIndex: number
 }
 
 interface AdditionalOptions {
-	AuctionId: number
+	CustomIdentifier: number
 	ConnectionIndex: number
 	useJsonPayload: boolean
 }
@@ -16,7 +16,7 @@ export function transformChunkToPayload(
 ): string | Buffer {
 	if (option?.useJsonPayload ?? false) {
 		const broadCastingPayload: BroadcastingPayload = {
-			AuctionId: option?.AuctionId ?? 10,
+			CustomIdentifier: option?.CustomIdentifier ?? 10,
 			ConnectionIndex: option?.ConnectionIndex ?? 1,
 			Media: chunk.toString("base64"),
 		}
