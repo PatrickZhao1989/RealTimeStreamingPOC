@@ -2,7 +2,7 @@
 @baseUrl=api.agora.io/dev/v1
 @contentType=application/json
 //Add your appId below
-@appId=07584acf86384ab9b25b03c56f5299e3
+@appId=YOUR-APP-ID
 //Follow https://docs.agora.io/en/faq/restful_authentication to generate the token
 //Create an .env file and create an environment variable AgoraRestfulCred
 @authToken={{$dotenv AgoraRestfulCred}}

@@ -1,4 +1,4 @@
-## Read me for information about A/V Streaming Happy Path - using Agora
+## A/V Streaming using Agora
 
 ---
 ## DevOps

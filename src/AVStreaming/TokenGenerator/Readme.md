@@ -2,6 +2,10 @@
 
 ### Follow steps below to generate a token 
 
+- Sign up with [Agora](https://www.agora.io/en/)
+- Below is an implementation based on Agora's instructions on [how to generate a token](https://docs.agora.io/en/Interactive%20Broadcast/token_server)
+
+
 ```powershell
 cd ./Tests
 ```
@@ -24,10 +28,8 @@ dotnet test --logger trx
   
 
 ```xml
-<StdOut>Token is {{Your-Token-With-the-parameters}}</StdOut>
+<StdOut>Token is {{Your-Token-Generated}}</StdOut>
 ```
-
-
 
 <br/>
 <br/>
@@ -35,6 +37,3 @@ dotnet test --logger trx
 
 ## Make sure you have [Rest Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) installed in VS code
 ## Open [./AgoraCoreAPISample/Api.http](./AgoraCoreAPISample/Api.http) in VSCode for Agora Server Rest API
-
-
-
